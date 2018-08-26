@@ -1,0 +1,38 @@
+<head>
+	<script src="nui://game/ui/jquery.js" type="text/javascript">
+	</script>
+	<script src="meter.js" type="text/javascript"></script>
+	<link href="meter.css" rel="stylesheet" type="text/css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body onselectstart="return false;" ondragstart="return false;">
+	<div id="meter" style="display: none;">
+		<div id="fare">
+			<div class="container">
+				<div id="fare-amount" class="meter-field fare">--</div>
+				<div class="label">FARE</div>
+			</div>
+			<div class="container">
+				<div id="rate" class="meter-field rate">--/mi</div>
+				<div class="label">RATE</div>
+			</div>
+		</div>
+	</div>
+
+  <div id="config" style="display:none;">
+    <h1>Fare Configuration</h1>
+
+    <div class="config-container">
+      <div class="button toggle-meter">Toggle Fare Meter</div>
+      <div class="button fare-distance">Fare Type: Distance</div>
+      <div class="button fare-flat">Fare Type: Flat Fee</div>
+      <div class="button set-rate">Set Rate</div>
+      <div class="button reset-trip">Reset Fare</div>
+      <div class="button close">Close</div>
+  </div>
+
+  </div>
+</body>
+
+</html>
