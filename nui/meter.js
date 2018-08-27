@@ -70,13 +70,15 @@ $(function() {
   }
 
   function updateMeterAttributes(attributes) {
-    meterVisible = attributes['meterVisible'];
-    rateType = attributes['rateType'];
-    rateAmount = attributes['rateAmount'];
-    currentFare = attributes['currentFare'];
-    currencyPrefix = attributes['currencyPrefix'];
-    rateSuffix = attributes['rateSuffix'];
-    refreshMeterDisplay();
+    if (attributes) {
+      meterVisible = attributes['meterVisible'];
+      rateType = attributes['rateType'];
+      rateAmount = attributes['rateAmount'];
+      currentFare = attributes['currentFare'];
+      currencyPrefix = attributes['currencyPrefix'];
+      rateSuffix = attributes['rateSuffix'];
+      refreshMeterDisplay();
+    }
   }
 
   function refreshMeterDisplay(){

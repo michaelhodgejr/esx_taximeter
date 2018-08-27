@@ -16,6 +16,9 @@ ESX = nil
 local lastLocation = nil
 local meterOwner = false
 local configOpen = false
+local configOpenFirstTime = false
+local playersInVehicle = {}
+local firstConfigOpenInVehicle = false
 
 local meterAttrs = {
   meterVisible = false,
@@ -42,12 +45,13 @@ end)
 ]]
 Citizen.CreateThread(function()
   while true do
+    calculateFareAmount()
+
     if meterOwner then
-      calculateFareAmount()
       updatePassengerMeters()
     end
 
-    Citizen.Wait(500)
+    Citizen.Wait(2000)
   end
 end)
 
@@ -56,14 +60,13 @@ Citizen.CreateThread(function()
   while true do
     if not IsPedInAnyVehicle(GetPlayerPed(-1), true) then
       meterAttrs['meterVisible'] = false
+      firstConfigOpenInVehicle = false
     end
 
     updateMeter()
     Citizen.Wait(0)
   end
 end)
-
-
 
 Citizen.CreateThread(function()
   while true do
@@ -78,6 +81,20 @@ Citizen.CreateThread(function()
           showConfig()
           configOpen = true
         end
+
+        -- Rest rate amount when getting in a new vehicle
+        if not firstConfigOpenInVehicle then
+          meterAttrs = {
+            meterVisible = false,
+            rateType = 'distance',
+            rateAmount = nil,
+            currencyPrefix = Config.CurrencyPrefix,
+            rateSuffix = Config.RateSuffix,
+            currentFare = 0,
+            distanceTraveled = 0
+          }
+          firstConfigOpenInVehicle = true
+        end
       end
     end
   end
@@ -89,6 +106,20 @@ AddEventHandler("esx_taximeter:updatePassenger", function(attributes)
   meterOwner = false
   updateMeter()
 end)
+
+RegisterNetEvent("esx_taximeter:updateLocation")
+AddEventHandler("esx_taximeter:updateLocation", function()
+  lastLocation = GetEntityCoords(GetPlayerPed(-1))
+end)
+
+
+
+RegisterNetEvent("esx_taximeter:resetMeter")
+AddEventHandler("esx_taximeter:resetMeter", function()
+  resetMeter()
+  updateMeter()
+end)
+
 
 RegisterNUICallback('closeConfig', function()
   SetNuiFocus(false, false)
@@ -111,10 +142,16 @@ RegisterNUICallback('updateAttrs', function(attrs)
     if k == 'meterVisible' then
       setMeterVisiblity()
     else
-      meterAttrs[k] = v
+      if k == 'rateType' then
+        meterAttrs[k] = v
+        resetMeter()
+      else
+        meterAttrs[k] = v
+      end
     end
   end
 
+  playersInVehicle = {}
 end)
 
 --[[
@@ -165,7 +202,11 @@ function updatePassengerMeters()
 
   for index,player in ipairs(players) do
     local playerId = GetPlayerServerId(player)
-    TriggerServerEvent('esx_taximeter:updatePassengerMeters', playerId, meterAttrs)
+
+    if not has_value(playersInVehicle, playerId) then
+      TriggerServerEvent('esx_taximeter:updatePassengerMeters', playerId, meterAttrs)
+      table.insert(playersInVehicle, playerId)
+    end
   end
 
 end
@@ -185,13 +226,13 @@ function GetPlayersInVehicle()
   for index,value in ipairs(players) do
     local target = GetPlayerPed(value)
 
-    --if(target ~= ply) then
+    if(target ~= ply) then
       local vehicle = GetVehiclePedIsIn(target)
 
       if playerVehicle == vehicle then
         table.insert(returnablePlayers, value)
       end
-    --end
+    end
   end
 
   return returnablePlayers
@@ -204,6 +245,16 @@ function resetMeter()
   meterAttrs['currentFare'] = nil
   lastLocation = GetEntityCoords(GetPlayerPed(-1))
   meterAttrs['distanceTraveled'] = 0
+
+  for i, player in ipairs(playersInVehicle) do
+    TriggerServerEvent('esx_taximeter:resetPassengerMeters', player)
+  end
+end
+
+function updatePassengerLocations()
+  for i, player in ipairs(playersInVehicle) do
+    TriggerServerEvent('esx_taximeter:updatePassengerLocation', player)
+  end
 end
 
 --[[
@@ -222,6 +273,8 @@ function MeterSetRate()
 
             if (rate < 99999 and rate > 1) then
               meterAttrs['rateAmount'] = rate
+              meterAttrs['currentFare'] = 0
+              playersInVehicle = {}
               showConfig()
             end
 
@@ -247,6 +300,8 @@ function setMeterVisiblity()
     meterAttrs['meterVisible'] = false
   else
     meterAttrs['meterVisible'] = true
+    lastLocation = GetEntityCoords(GetPlayerPed(-1))
+    updatePassengerLocations()
   end
 end
 
@@ -281,18 +336,21 @@ end
 function calculateFareAmount()
   if (meterAttrs['meterVisible']) and (meterAttrs['rateType'] == 'distance') and not (meterAttrs['rateAmount'] == nil)  then
     start = lastLocation
-    current = GetEntityCoords(GetPlayerPed(-1))
-    distance = CalculateTravelDistanceBetweenPoints(start, current)
-    lastLocation = current
-    meterAttrs['distanceTraveled'] = meterAttrs['distanceTraveled'] + distance
 
-    if Config.DistanceMeasurement == 'mi' then
-      fare_amount = (meterAttrs['distanceTraveled'] / 1609.34) * meterAttrs['rateAmount']
-    else
-      fare_amount = (meterAttrs['distanceTraveled'] / 1000.00) * meterAttrs['rateAmount']
+    if start then
+      current = GetEntityCoords(GetPlayerPed(-1))
+      distance = CalculateTravelDistanceBetweenPoints(start, current)
+      lastLocation = current
+      meterAttrs['distanceTraveled'] = meterAttrs['distanceTraveled'] + distance
+
+      if Config.DistanceMeasurement == 'mi' then
+        fare_amount = (meterAttrs['distanceTraveled'] / 1609.34) * meterAttrs['rateAmount']
+      else
+        fare_amount = (meterAttrs['distanceTraveled'] / 1000.00) * meterAttrs['rateAmount']
+      end
+
+      meterAttrs['currentFare'] = string.format("%.2f", fare_amount)
     end
-
-    meterAttrs['currentFare'] = string.format("%.2f", fare_amount)
   end
 end
 
