@@ -33,5 +33,8 @@ Create your config file from the default.
 ```
   cp config.default config.lua
 ```
+# Known Issues
+When a passenger gets in the vehicle, the driver will need to toggle the radar to
+make it appear.
 
 # Upgrading
