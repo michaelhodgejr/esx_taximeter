@@ -16,6 +16,8 @@ will be able to see the meter if it is active.
 In the configuration file you can set restrictions on what vehicle and what ESX
 jobs can use the meter. Currently supports both imperial and metric measurements.
 
+The meter can be launched by using LEFTCTRL + G
+
 # Requirements
 ESX
 
