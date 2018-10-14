@@ -25,7 +25,7 @@ ESX
 Run inside of your server-data/resources folder
 
 ```
-git clone git@github.com:michaelhodgejr/esx_taximeter.git [esx]/esx_taximeter
+git clone https://github.com/michaelhodgejr/esx_taximeter.git [esx]/esx_taximeter
 ```
 
 Add to your server.cfg file

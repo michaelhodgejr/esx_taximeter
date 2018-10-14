@@ -19,6 +19,7 @@ local configOpen = false
 local configOpenFirstTime = false
 local playersInVehicle = {}
 local firstConfigOpenInVehicle = false
+local currentJob = 'unemployed'
 
 local meterAttrs = {
   meterVisible = false,
@@ -98,6 +99,16 @@ Citizen.CreateThread(function()
       end
     end
   end
+end)
+
+RegisterNetEvent('esx:playerLoaded')
+AddEventHandler('esx:playerLoaded', function(xPlayer)
+  currentJob = ESX.GetPlayerData().job.name
+end)
+
+RegisterNetEvent('esx:setJob')
+AddEventHandler('esx:setJob', function(xPlayer)
+  currentJob = ESX.GetPlayerData().job.name
 end)
 
 RegisterNetEvent("esx_taximeter:updatePassenger")
@@ -186,7 +197,7 @@ function hasMeterAppropriateJob()
     return true
   end
 
-  if has_value(Config.JobsThatCanUseMeter, ESX.GetPlayerData().job.name) then
+  if has_value(Config.JobsThatCanUseMeter, currentJob) then
     return true
   else
     return false
